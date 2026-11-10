@@ -1,0 +1,28 @@
+# .github/workflows/ci-cd.yml: replaces azure-pipelines.yml
+name: ci-cd
+on:
+  push:
+    branches: [main]           # replaces trigger: main
+  workflow_dispatch:           # adds a manual Run button
+
+permissions:
+  contents: read               # default for every job: read-only
+
+jobs:
+  build:                       # replaces the Build stage
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/build          # the composite action
+      with:
+        configuration: Release
+
+  deploy-prod:                 # replaces the DeployProd stage
+    needs: build               # replaces dependsOn
+    permissions:
+      id-token: write          # granted here, so the called workflow can use it
+      contents: read
+    uses: ./.github/workflows/deploy.yml     # the reusable workflow
+    with:
+      environment: prod
+      resource-group: rg-shop-prod

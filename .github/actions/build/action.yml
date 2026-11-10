@@ -1,0 +1,14 @@
+# .github/actions/build/action.yml: replaces templates/build-steps.yml
+name: build
+description: Validate the infrastructure code
+inputs:
+  configuration:               # replaces the template parameter
+    description: Build configuration
+    required: true
+runs:
+  using: composite             # a bundle of steps, not a separate job
+  steps:
+  - shell: bash                # composite run steps must name their shell
+    run: echo "Building in ${{ inputs.configuration }}"
+  - shell: bash
+    run: az bicep build --file infra/main.bicep   # compile check, no Azure login needed

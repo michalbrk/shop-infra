@@ -1,0 +1,32 @@
+# .github/workflows/deploy.yml: replaces templates/deploy-job.yml
+name: deploy
+on:
+  workflow_call:               # callable from other workflows, like a job template
+    inputs:
+      environment:
+        type: string
+        required: true
+      resource-group:
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}   # pauses here until a reviewer approves
+    permissions:
+      id-token: write          # may request an OIDC token from GitHub
+      contents: read           # may read the repository
+    steps:
+    - uses: actions/checkout@v5              # jobs never check out code on their own
+    - uses: azure/login@v3                   # replaces the service connection
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+    - name: Deploy Bicep
+      run: >
+        az deployment group create
+        -g ${{ inputs.resource-group }}
+        -f infra/main.bicep
+        -p location=${{ vars.LOCATION }} storagePrefix=${{ vars.STORAGE_PREFIX }}
